@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adivina el Número</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+
+        .instructions {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .game-container {
+            display: none;
+        }
+
+        .game-container.active {
+            display: block;
+        }
+
+        .attempts-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .attempt {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #ddd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: #999;
+            transition: all 0.3s;
+        }
+
+        .attempt.used {
+            border-color: #e74c3c;
+            background: #ffe5e5;
+            color: #e74c3c;
+        }
+
+        .attempt.correct {
+            border-color: #27ae60;
+            background: #d5f4e6;
+            color: #27ae60;
+            animation: pulse 0.5s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .input-area {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 20px;
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            text-align: center;
+            transition: border-color 0.3s;
+            font-weight: bold;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .feedback {
+            min-height: 80px;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .feedback.active {
+            display: block;
+        }
+
+        .feedback.lejos {
+            background: #ffe5e5;
+            color: #e74c3c;
+            border: 3px solid #e74c3c;
+        }
+
+        .feedback.cerca {
+            background: #fff4e5;
+            color: #f39c12;
+            border: 3px solid #f39c12;
+        }
+
+        .feedback.muy-cerca {
+            background: #e8f8f5;
+            color: #16a085;
+            border: 3px solid #16a085;
+        }
+
+        .feedback.correcto {
+            background: #d5f4e6;
+            color: #27ae60;
+            border: 3px solid #27ae60;
+        }
+
+        .feedback.perdido {
+            background: #f5f5f5;
+            color: #555;
+            border: 3px solid #999;
+        }
+
+        .hint {
+            font-size: 14px;
+            margin-top: 10px;
+            font-weight: normal;
+        }
+
+        .history {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .history-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .history-item {
+            padding: 8px 12px;
+            background: #f8f8f8;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-number {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .history-feedback {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .history-feedback.lejos {
+            background: #ffe5e5;
+            color: #e74c3c;
+        }
+
+        .history-feedback.cerca {
+            background: #fff4e5;
+            color: #f39c12;
+        }
+
+        .history-feedback.muy-cerca {
+            background: #e8f8f5;
+            color: #16a085;
+        }
+
+        .start-screen {
+            display: block;
+        }
+
+        .start-screen.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="start-screen" id="startScreen">
+            <h1>🎯 Adivina el Número</h1>
+            <p class="instructions">
+                Tienes <strong>5 intentos</strong> para adivinar un número entre 1 y 100.<br>
+                Recibirás pistas sobre qué tan cerca estás del número secreto.
+            </p>
+            <button class="btn" id="startBtn">Empezar</button>
+        </div>
+
+        <div class="game-container" id="gameContainer">
+            <h1>🎯 Adivina el Número</h1>
+            
+            <div class="attempts-container" id="attemptsContainer">
+                <div class="attempt">1</div>
+                <div class="attempt">2</div>
+                <div class="attempt">3</div>
+                <div class="attempt">4</div>
+                <div class="attempt">5</div>
+            </div>
+
+            <div class="input-area">
+                <label for="guessInput">Ingresa un número (1-100):</label>
+                <input type="number" id="guessInput" min="1" max="100" placeholder="?" autofocus>
+            </div>
+
+            <button class="btn" id="guessBtn">Adivinar</button>
+
+            <div class="feedback" id="feedback"></div>
+
+            <div class="history" id="historyContainer" style="display: none;">
+                <div class="history-title">Historial de intentos:</div>
+                <div id="historyList"></div>
+            </div>
+
+            <button class="btn" id="restartBtn" style="display: none; margin-top: 20px;">Jugar de Nuevo</button>
+        </div>
+    </div>
+
+    <script>
+        let secretNumber;
+        let attemptsLeft = 5;
+        let currentAttempt = 0;
+        let gameOver = false;
+        let history = [];
+
+        const startScreen = document.getElementById('startScreen');
+        const gameContainer = document.getElementById('gameContainer');
+        const startBtn = document.getElementById('startBtn');
+        const guessInput = document.getElementById('guessInput');
+        const guessBtn = document.getElementById('guessBtn');
+        const feedback = document.getElementById('feedback');
+        const restartBtn = document.getElementById('restartBtn');
+        const attemptsContainer = document.getElementById('attemptsContainer');
+        const historyContainer = document.getElementById('historyContainer');
+        const historyList = document.getElementById('historyList');
+
+        startBtn.addEventListener('click', startGame);
+        guessBtn.addEventListener('click', makeGuess);
+        restartBtn.addEventListener('click', resetGame);
+
+        guessInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !gameOver) {
+                makeGuess();
+            }
+        });
+
+        function startGame() {
+            secretNumber = Math.floor(Math.random() * 100) + 1;
+            startScreen.classList.add('hidden');
+            gameContainer.classList.add('active');
+            guessInput.focus();
+            console.log('Número secreto:', secretNumber); // Para pruebas
+        }
+
+        function makeGuess() {
+            if (gameOver) return;
+
+            const guess = parseInt(guessInput.value);
+
+            if (isNaN(guess) || guess < 1 || guess > 100) {
+                showFeedback('Por favor, ingresa un número válido entre 1 y 100', 'lejos');
+                return;
+            }
+
+            currentAttempt++;
+            attemptsLeft--;
+
+            const distance = Math.abs(guess - secretNumber);
+            let feedbackType;
+            let feedbackMessage;
+            let feedbackText;
+
+            if (guess === secretNumber) {
+                feedbackType = 'correcto';
+                feedbackMessage = `🎉 ¡CORRECTO! El número era ${secretNumber}`;
+                feedbackText = 'Correcto';
+                markAttempt(currentAttempt, true);
+                endGame(true);
+            } else {
+                markAttempt(currentAttempt, false);
+
+                if (distance <= 5) {
+                    feedbackType = 'muy-cerca';
+                    feedbackMessage = '🔥 ¡MUY CERCA!';
+                    feedbackText = 'Muy cerca';
+                } else if (distance <= 15) {
+                    feedbackType = 'cerca';
+                    feedbackMessage = '👍 Cerca...';
+                    feedbackText = 'Cerca';
+                } else {
+                    feedbackType = 'lejos';
+                    feedbackMessage = '❄️ Lejos';
+                    feedbackText = 'Lejos';
+                }
+
+                let hint = guess < secretNumber ? '⬆️ El número es mayor' : '⬇️ El número es menor';
+                feedbackMessage += `<div class="hint">${hint}</div>`;
+
+                if (attemptsLeft === 0) {
+                    feedbackType = 'perdido';
+                    feedbackMessage = `😔 ¡Se acabaron los intentos!<div class="hint">El número era ${secretNumber}</div>`;
+                    feedbackText = 'Perdido';
+                    endGame(false);
+                }
+            }
+
+            addToHistory(guess, feedbackText, feedbackType);
+            showFeedback(feedbackMessage, feedbackType);
+            guessInput.value = '';
+            guessInput.focus();
+        }
+
+        function markAttempt(attempt, correct) {
+            const attempts = attemptsContainer.querySelectorAll('.attempt');
+            const attemptElement = attempts[attempt - 1];
+            
+            if (correct) {
+                attemptElement.classList.add('correct');
+                attemptElement.textContent = '✓';
+            } else {
+                attemptElement.classList.add('used');
+                attemptElement.textContent = '✗';
+            }
+        }
+
+        function showFeedback(message, type) {
+            feedback.className = 'feedback active ' + type;
+            feedback.innerHTML = message;
+        }
+
+        function addToHistory(guess, feedbackText, feedbackType) {
+            history.push({ guess, feedbackText, feedbackType });
+            
+            historyContainer.style.display = 'block';
+            
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            historyItem.innerHTML = `
+                <span class="history-number">Intento ${currentAttempt}: ${guess}</span>
+                <span class="history-feedback ${feedbackType}">${feedbackText}</span>
+            `;
+            
+            historyList.insertBefore(historyItem, historyList.firstChild);
+        }
+
+        function endGame(won) {
+            gameOver = true;
+            guessBtn.disabled = true;
+            guessInput.disabled = true;
+            restartBtn.style.display = 'inline-block';
+        }
+
+        function resetGame() {
+            secretNumber = Math.floor(Math.random() * 100) + 1;
+            attemptsLeft = 5;
+            currentAttempt = 0;
+            gameOver = false;
+            history = [];
+
+            const attempts = attemptsContainer.querySelectorAll('.attempt');
+            attempts.forEach((attempt, index) => {
+                attempt.className = 'attempt';
+                attempt.textContent = index + 1;
+            });
+
+            feedback.className = 'feedback';
+            feedback.innerHTML = '';
+            
+            historyContainer.style.display = 'none';
+            historyList.innerHTML = '';
+
+            guessInput.value = '';
+            guessInput.disabled = false;
+            guessBtn.disabled = false;
+            restartBtn.style.display = 'none';
+            guessInput.focus();
+
+            console.log('Nuevo número secreto:', secretNumber); // Para pruebas
+        }
+    </script>
+</body>
+</html>
